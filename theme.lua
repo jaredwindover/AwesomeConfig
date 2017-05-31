@@ -8,7 +8,7 @@
 
 -- {{{ Main
 theme = {}
-theme.wallpaper = "/home/jared/Wallpaper/Jaguar.jpg"
+theme.wallpaper = "/home/jared/Wallpaper/NorthernLights.jpg"
 -- }}}
 
 -- {{{ Styles
