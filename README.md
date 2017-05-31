@@ -1,3 +1,3 @@
 # AwesomeConfig
 ## Screenshot:
-![awesomeWM Screenshot](/screenshot.png?raw=true "awesomeWM screenshot")
+![awesomeWM Screenshot](/screenshot.jpg?raw=true "awesomeWM screenshot")
