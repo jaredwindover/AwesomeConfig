@@ -5,15 +5,13 @@ awful.rules = require("awful.rules")
 require("awful.autofocus")
 -- Widget and layout libraries
 local wibox = require("wibox")
-local lain = require("lain")
 -- Theme handling library
 local beautiful = require("beautiful")
 -- Notification library
 local naughty = require("naughty")
 local menubar = require("menubar")
 
-local separators = lain.util.separators
-local markup = lain.util.markup
+local sysBar = require("sysBar")
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -164,58 +162,6 @@ mytasklist.buttons = awful.util.table.join(
 end))
 
 
--- {{{ Wibox
--- Create a textclock widget
-local mytextclock = wibox.widget.textclock("<span foreground=\"#272822\">  %a %b %d, %H:%m</span>")
-
--- Create a volume widget
-local icon_dir = "/home/jared/.config/awesome/icons/"
-local volume_icon = wibox.widget.imagebox(icon_dir .. "volume.svg")
-local volume = lain.widget.alsa {
-	 timeout = 1,
-	 settings = function()
-			local value = volume_now.level .. "% "
-			if volume_now.status == "off" then
-				 value = "mute "
-			end
-			widget:set_markup(markup("#272822", value))
-	 end
-}
-
--- Create a network widget
-local wifi_icon = wibox.widget.imagebox(icon_dir .. "wifi.svg")
-local net = lain.widget.net {
-	 settings = function()
-			widget:set_markup(markup("#272822", net_now.sent .. "↑ " .. net_now.received .. "↓ "))
-	 end
-}
-
--- Create a battery widget
-local battery_icon = wibox.widget.imagebox(icon_dir .. "battery.svg")
-local battery = lain.widget.bat {
-	 notify = "off",
-	 settings = function()
-			widget:set_markup(markup("#272822", bat_now.perc .. "% "))
-	 end
-}
-
--- Create a temp widget
-local temperature_icon = wibox.widget.imagebox(icon_dir .. "temperature.svg")
-local temp = lain.widget.temp {
-	 settings = function()
-			widget:set_markup(markup("#272822", coretemp_now .. "°C "))
-	 end
-}
-
--- Create a cpu widget
-local cpu_icon = wibox.widget.imagebox(icon_dir .. "cpu.svg")
-local cpu = lain.widget.cpu {
-	 settings = function()
-			widget:set_markup(markup("#272822", cpu_now.usage .. "% "))
-	 end
-}
-
-
 for s in screen do
 	 -- Create a promptbox for each screen
 	 mypromptbox[s] = awful.widget.prompt()
@@ -237,76 +183,14 @@ for s in screen do
 	 mywibox[s] = awful.wibox({ position = "top", screen = s })
 
 	 -- Widgets that are aligned to the left
-	 local left_layout = wibox.layout.fixed.horizontal()
-	 left_layout:add(mylauncher)
-	 left_layout:add(mytaglist[s])
-	 left_layout:add(mypromptbox[s])
-
-	 local arrow = separators.arrow_left
+	 local left_layout = wibox.layout.fixed.horizontal(
+			mylauncher,
+			mytaglist[s],
+			mypromptbox[s]
+	 )
 
 	 -- Widgets that are aligned to the right
-	 local right_layout = wibox.layout.fixed.horizontal()
-	 if s == 1 then right_layout:add(wibox.widget.systray()) end
-	 right_layout:add(arrow(theme.bg_normal, "#E6DB74"))
-	 right_layout:add(wibox.container.background(
-											 volume_icon,
-											 "#E6DB74"
-	 ))
-	 right_layout:add(wibox.container.background(
-											 wibox.container.margin(volume.widget, 3, 6),
-											 "#E6DB74"
-	 ))
-
-	 right_layout:add(arrow("#E6DB74", "#FD971F"))
-	 right_layout:add(wibox.container.background(
-											 wifi_icon,
-											 "#FD971F"
-	 ))
-	 right_layout:add(wibox.container.background(
-											 wibox.container.margin(net.widget, 3, 6),
-											 "#FD971F"
-	 ))
-
-	 right_layout:add(arrow("#FD971F", "#F92672"))
-	 right_layout:add(wibox.container.background(
-											 battery_icon,
-											 "#F92672"
-	 ))
-	 right_layout:add(wibox.container.background(
-											 wibox.container.margin(battery.widget, 3, 6),
-											 "#F92672"
-	 ))
-
-	 right_layout:add(arrow("#F92672", "#FD5FF0"))
-	 right_layout:add(wibox.container.background(
-											 temperature_icon,
-											 "#FD5FF0"
-	 ))
-	 right_layout:add(wibox.container.background(
-											 wibox.container.margin(temp.widget, 3, 6),
-											 "#FD5FF0"
-	 ))
-
-	 right_layout:add(arrow("#FD5FF0", "#66D9EF"))
-	 right_layout:add(wibox.container.background(
-											 cpu_icon,
-											 "#66D9EF"
-	 ))
-	 right_layout:add(wibox.container.background(
-											 wibox.container.margin(cpu.widget, 3, 6),
-											 "#66D9EF"
-	 ))
-
-	 right_layout:add(arrow("#66D9EF", "#A6E22E"))
-	 right_layout:add(wibox.container.background(
-											 wibox.container.margin(mytextclock, 3, 6),
-											 "#A6E22E"
-	 ))
-	 right_layout:add(arrow("#A6E22E", theme.bg_normal))
-	 right_layout:add(wibox.container.background(
-											 mylayoutbox[s],
-											theme.bg_normal
-	 ))
+	 local right_layout = sysBar(theme, s)
 
 	 -- Now bring it all together (with the tasklist in the middle)
 	 local layout = wibox.layout.align.horizontal()
@@ -316,7 +200,6 @@ for s in screen do
 
 	 mywibox[s]:set_widget(layout)
 end
--- }}}
 
 -- {{{ Mouse bindings
 root.buttons(awful.util.table.join(
@@ -473,10 +356,6 @@ awful.rules.rules = {
 										raise = true,
 										keys = clientkeys,
 										buttons = clientbuttons } },
-	 { rule = { class = "MPlayer" },
-		 properties = { floating = true } },
-	 { rule = { class = "pinentry" },
-		 properties = { floating = true } },
 	 { rule = { class = "gimp" },
 		 properties = { floating = true } },
 	 -- Set Firefox to always map on tags number 2 of screen 1.
@@ -506,51 +385,6 @@ client.connect_signal("manage", function (c, startup)
 															 awful.placement.no_overlap(c)
 															 awful.placement.no_offscreen(c)
 														end
-												 end
-
-												 local titlebars_enabled = false
-												 if titlebars_enabled and (c.type == "normal" or c.type == "dialog") then
-														-- buttons for the titlebar
-														local buttons = awful.util.table.join(
-															 awful.button({ }, 1, function()
-																		 client.focus = c
-																		 c:raise()
-																		 awful.mouse.client.move(c)
-															 end),
-															 awful.button({ }, 3, function()
-																		 client.focus = c
-																		 c:raise()
-																		 awful.mouse.client.resize(c)
-															 end)
-														)
-
-														-- Widgets that are aligned to the left
-														local left_layout = wibox.layout.fixed.horizontal()
-														left_layout:add(awful.titlebar.widget.iconwidget(c))
-														left_layout:buttons(buttons)
-
-														-- Widgets that are aligned to the right
-														local right_layout = wibox.layout.fixed.horizontal()
-														right_layout:add(awful.titlebar.widget.floatingbutton(c))
-														right_layout:add(awful.titlebar.widget.maximizedbutton(c))
-														right_layout:add(awful.titlebar.widget.stickybutton(c))
-														right_layout:add(awful.titlebar.widget.ontopbutton(c))
-														right_layout:add(awful.titlebar.widget.closebutton(c))
-
-														-- The title goes in the middle
-														local middle_layout = wibox.layout.flex.horizontal()
-														local title = awful.titlebar.widget.titlewidget(c)
-														title:set_align("center")
-														middle_layout:add(title)
-														middle_layout:buttons(buttons)
-
-														-- Now bring it all together
-														local layout = wibox.layout.align.horizontal()
-														layout:set_left(left_layout)
-														layout:set_right(right_layout)
-														layout:set_middle(middle_layout)
-
-														awful.titlebar(c):set_widget(layout)
 												 end
 end)
 
